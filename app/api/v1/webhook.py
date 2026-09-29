@@ -8,7 +8,7 @@ from app.services.telegram import send_transaction_notification
 
 router = APIRouter()
 
-EXPECTED_API_KEY = os.getenv("API_KEY", "macbook_super_secret_tap_key_123")
+EXPECTED_API_KEY = os.getenv("API_KEY", "change_this_default_key")
 
 
 @router.post("/webhook", status_code=status.HTTP_201_CREATED)

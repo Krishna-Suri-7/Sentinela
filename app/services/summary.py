@@ -5,14 +5,22 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.models.transaction import Transaction
 
+from app.models.settings import Settings
+
 def get_daily_summary(db: Session, daily_allowance: float = None):
     now = datetime.now()
     today = now.date()
     
-    # 1. Load config from Environment Variables (for cloud deployment)
-    income = float(os.getenv("MONTHLY_INCOME", "3000.0"))
-    fixed = float(os.getenv("FIXED_EXPENSES", "1200.0"))
-    savings = float(os.getenv("SAVINGS_GOAL", "500.0"))
+    # 1. Load config from Database (so it can be edited via the Web UI)
+    settings = db.query(Settings).first()
+    if settings:
+        income = settings.monthly_income
+        fixed = settings.fixed_expenses
+        savings = settings.savings_goal
+    else:
+        income = float(os.getenv("MONTHLY_INCOME", "3000.0"))
+        fixed = float(os.getenv("FIXED_EXPENSES", "1200.0"))
+        savings = float(os.getenv("SAVINGS_GOAL", "500.0"))
     
     disposable_income = income - fixed - savings
     

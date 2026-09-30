@@ -1,7 +1,7 @@
 // Sentinela Daily Budget Widget for Scriptable
 // Add this to the Scriptable iOS app!
 
-const API_URL = "https://atomic-inf-evaluation-hazards.trycloudflare.com/api/v1/summary/daily";
+const API_URL = "https://sentinela-tdya.onrender.com/api/v1/summary/daily";
 
 // Colors for aesthetic look
 const COLORS = {
@@ -16,8 +16,8 @@ const COLORS = {
 async function fetchSummary() {
   try {
     let req = new Request(API_URL);
-    // Timeout so the widget doesn't hang if the tunnel is down
-    req.timeoutInterval = 10;
+    // Timeout increased to 30s so the widget doesn't fail if the free cloud server is waking up from sleep
+    req.timeoutInterval = 30;
     return await req.loadJSON();
   } catch (e) {
     return null;

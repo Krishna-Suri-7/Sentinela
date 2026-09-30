@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinela Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8">Sentinela Dashboard</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">Financial Settings</h2>
+                <form id="settingsForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-400">Monthly Income (€)</label>
+                        <input type="number" id="income" class="mt-1 block w-full bg-gray-700 border-none rounded p-2 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400">Fixed Expenses (€)</label>
+                        <input type="number" id="fixed" class="mt-1 block w-full bg-gray-700 border-none rounded p-2 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400">Savings Goal (€)</label>
+                        <input type="number" id="savings" class="mt-1 block w-full bg-gray-700 border-none rounded p-2 text-white">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 rounded p-2 font-bold">Save Settings</button>
+                </form>
+            </div>
+            
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">Categories</h2>
+                <ul id="categoryList" class="space-y-2 mb-4">
+                    <!-- Categories injected via JS -->
+                </ul>
+                <div class="flex gap-2">
+                    <input type="text" id="catEmoji" placeholder="🍔" class="w-16 bg-gray-700 border-none rounded p-2 text-white">
+                    <input type="text" id="catName" placeholder="New Category" class="flex-1 bg-gray-700 border-none rounded p-2 text-white">
+                    <button id="addCatBtn" class="bg-green-600 hover:bg-green-700 rounded px-4 font-bold">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        async function loadSettings() {
+            let res = await fetch('/api/v1/settings/');
+            let data = await res.json();
+            document.getElementById('income').value = data.monthly_income;
+            document.getElementById('fixed').value = data.fixed_expenses;
+            document.getElementById('savings').value = data.savings_goal;
+        }
+
+        async function loadCategories() {
+            let res = await fetch('/api/v1/settings/categories');
+            let data = await res.json();
+            const list = document.getElementById('categoryList');
+            list.innerHTML = data.map(cat => `
+                <li class="flex justify-between items-center bg-gray-700 p-2 rounded">
+                    <span>${cat.emoji} ${cat.name}</span>
+                    <button onclick="deleteCat(${cat.id})" class="text-red-400 hover:text-red-300">✖</button>
+                </li>
+            `).join('');
+        }
+
+        document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await fetch('/api/v1/settings/', {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    monthly_income: document.getElementById('income').value,
+                    fixed_expenses: document.getElementById('fixed').value,
+                    savings_goal: document.getElementById('savings').value
+                })
+            });
+            alert("Saved!");
+        });
+
+        document.getElementById('addCatBtn').addEventListener('click', async () => {
+            await fetch('/api/v1/settings/categories', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    emoji: document.getElementById('catEmoji').value,
+                    name: document.getElementById('catName').value
+                })
+            });
+            document.getElementById('catName').value = '';
+            loadCategories();
+        });
+
+        async function deleteCat(id) {
+            await fetch(`/api/v1/settings/categories/${id}`, {method: 'DELETE'});
+            loadCategories();
+        }
+
+        loadSettings();
+        loadCategories();
+    </script>
+</body>
+</html>

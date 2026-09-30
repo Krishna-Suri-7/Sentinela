@@ -17,6 +17,7 @@ Instead of opening a budgeting app, Sentinela immediately sends a **Push Notific
 
 - **Zero-Friction Logging:** Intercepts Apple Pay transactions instantly via iOS Shortcuts.
 - **Interactive Telegram UI:** Categorize transactions from your lock screen without opening an app.
+- **Full-Stack Web Dashboard:** A responsive, Tailwind CSS-powered admin panel served by FastAPI to dynamically manage financial settings and custom categories in PostgreSQL.
 - **Dynamic Daily Budgeting:** Automatically calculates a strict daily spend limit based on your disposable income and remaining days in the month.
 - **iOS Home Screen Widget:** Includes a custom `Scriptable` JavaScript widget for a beautiful, real-time budget dashboard on your iPhone.
 - **Cloud Native:** Dockerized and fully ready for deployment on Render, Fly.io, or AWS with a PostgreSQL (Supabase) database.

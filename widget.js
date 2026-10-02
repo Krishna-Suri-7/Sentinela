@@ -67,6 +67,10 @@ async function createWidget() {
   spentLabel.font = Font.mediumSystemFont(12);
   spentLabel.textColor = COLORS.textSecondary;
   
+  // Tell iOS to refresh this widget every 15 minutes
+  let refreshDate = new Date(Date.now() + 1000 * 60 * 15);
+  widget.refreshAfterDate = refreshDate;
+  
   return widget;
 }
 

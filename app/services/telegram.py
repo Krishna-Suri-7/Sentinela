@@ -102,6 +102,8 @@ async def edit_message_to_confirmed(chat_id: int, message_id: int, merchant: str
     
     if inline_keyboard:
         payload["reply_markup"] = inline_keyboard
+        
+    async with httpx.AsyncClient(timeout=8.0) as client:
         try:
             response = await client.post(TELEGRAM_EDIT_API_URL, json=payload)
             response.raise_for_status()

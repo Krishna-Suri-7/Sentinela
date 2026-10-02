@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Request, BackgroundTasks, Depends
 from sqlalchemy.orm import Session
+from sqlalchemy import func
+from datetime import datetime, timedelta
 from app.core.database import get_db
 from app.models.transaction import Transaction
 from app.models.settings import Category
@@ -22,12 +24,29 @@ async def telegram_webhook(request: Request, background_tasks: BackgroundTasks, 
         if msg_text.startswith("/summary"):
             summary = get_daily_summary(db)
             rem = summary["remaining"]
+            
+            # Calculate weekly spending by category
+            one_week_ago = datetime.now() - timedelta(days=7)
+            weekly_stats = db.query(
+                Transaction.category, 
+                func.sum(Transaction.amount)
+            ).filter(
+                Transaction.created_at >= one_week_ago
+            ).group_by(Transaction.category).all()
+            
+            cat_text = "\n".join([f"• {cat}: €{amt:.2f}" for cat, amt in weekly_stats])
+            if not cat_text:
+                cat_text = "No spending in the last 7 days."
+                
             text = (
                 f"📊 *Current Status*\n\n"
                 f"💸 *Spent Today:* €{summary['total_spent_today']:.2f}\n"
                 f"💰 *Remaining Today:* €{rem:.2f}\n"
-                f"📅 *Remaining Monthly:* €{summary['remaining_monthly']:.2f}"
+                f"📅 *Remaining Monthly:* €{summary['remaining_monthly']:.2f}\n\n"
+                f"📈 *Last 7 Days by Category:*\n"
+                f"{cat_text}"
             )
+            
             payload = {"chat_id": chat_id, "text": text, "parse_mode": "Markdown"}
             token = os.getenv("TELEGRAM_BOT_TOKEN")
             if token:

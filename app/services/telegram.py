@@ -10,7 +10,22 @@ TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessag
 TELEGRAM_EDIT_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/editMessageText"
 
 
-async def send_transaction_notification(merchant: str, amount: float, currency: str = "EUR", tx_id: int = None) -> bool:
+def build_category_keyboard(prefix: str, categories: list) -> dict:
+    keyboard = []
+    row = []
+    for cat in categories:
+        btn_text = f"{cat['emoji']} {cat['name']}"
+        # using cat name as callback data, keep it short
+        btn_data = f"{prefix}_{cat['name']}"
+        row.append({"text": btn_text, "callback_data": btn_data})
+        if len(row) == 2:
+            keyboard.append(row)
+            row = []
+    if row:
+        keyboard.append(row)
+    return {"inline_keyboard": keyboard}
+
+async def send_transaction_notification(merchant: str, amount: float, currency: str = "EUR", tx_id: int = None, categories: list = None) -> bool:
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
         print("[Telegram Service] Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID.")
         return False
@@ -23,22 +38,12 @@ async def send_transaction_notification(merchant: str, amount: float, currency: 
     )
 
     prefix = f"tx_{tx_id}" if tx_id else "tx_new"
-    inline_keyboard = {
-        "inline_keyboard": [
-            [
-                {"text": "🛒 Groceries", "callback_data": f"{prefix}_groceries"},
-                {"text": "🍔 Dining", "callback_data": f"{prefix}_dining"},
-            ],
-            [
-                {"text": "🚌 Transport", "callback_data": f"{prefix}_transport"},
-                {"text": "🛍️ Shopping", "callback_data": f"{prefix}_shopping"},
-            ],
-            [
-                {"text": "💡 Bills / Sub", "callback_data": f"{prefix}_bills"},
-                {"text": "📦 Other", "callback_data": f"{prefix}_other"},
-            ],
-        ]
-    }
+    
+    # If no categories passed, fallback
+    if not categories:
+        categories = [{"name": "Other", "emoji": "📦"}]
+        
+    inline_keyboard = build_category_keyboard(prefix, categories)
 
     payload = {
         "chat_id": TELEGRAM_CHAT_ID,
@@ -56,20 +61,19 @@ async def send_transaction_notification(merchant: str, amount: float, currency: 
             print(f"[Telegram Service] Failed to send alert: {err}")
             return False
 
-async def edit_message_to_confirmed(chat_id: int, message_id: int, merchant: str, amount: float, currency: str, category: str, remaining_budget: float = None) -> bool:
+async def edit_message_to_confirmed(chat_id: int, message_id: int, merchant: str, amount: float, currency: str, category: str, remaining_budget: float = None, categories: list = None, tx_id: int = None) -> bool:
     if not TELEGRAM_BOT_TOKEN:
         return False
         
-    emoji_map = {
-        "groceries": "🛒 Groceries",
-        "dining": "🍔 Dining",
-        "transport": "🚌 Transport",
-        "shopping": "🛍️ Shopping",
-        "bills": "💡 Bills / Sub",
-        "other": "📦 Other",
-    }
-    
-    cat_label = emoji_map.get(category, category.capitalize())
+    # Find emoji for the chosen category
+    cat_emoji = "✅"
+    if categories:
+        for cat in categories:
+            if cat["name"] == category:
+                cat_emoji = cat["emoji"]
+                break
+                
+    cat_label = f"{cat_emoji} {category}"
     
     message_text = (
         f"💳 *Sentinela: Payment Logged*\n\n"
@@ -84,15 +88,20 @@ async def edit_message_to_confirmed(chat_id: int, message_id: int, merchant: str
         else:
             message_text += f"\n\n⚠️ *Over Budget Today:* `{abs(remaining_budget):.2f} {currency}`"
 
+    # Re-attach keyboard so they can edit it later
+    inline_keyboard = None
+    if categories and tx_id:
+        inline_keyboard = build_category_keyboard(f"tx_{tx_id}", categories)
+
     payload = {
         "chat_id": chat_id,
         "message_id": message_id,
         "text": message_text,
-        "parse_mode": "Markdown"
+        "parse_mode": "Markdown",
     }
-    # No reply_markup so it removes the buttons
-
-    async with httpx.AsyncClient(timeout=8.0) as client:
+    
+    if inline_keyboard:
+        payload["reply_markup"] = inline_keyboard
         try:
             response = await client.post(TELEGRAM_EDIT_API_URL, json=payload)
             response.raise_for_status()

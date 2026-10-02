@@ -34,12 +34,17 @@ async def receive_transaction(
     db.commit()
     db.refresh(new_tx)
 
+    from app.models.settings import Category
+    categories_db = db.query(Category).all()
+    categories_list = [{"name": c.name, "emoji": c.emoji} for c in categories_db]
+
     background_tasks.add_task(
         send_transaction_notification,
         merchant=new_tx.merchant,
         amount=new_tx.amount,
         currency=new_tx.currency,
         tx_id=new_tx.id,
+        categories=categories_list,
     )
 
     return {

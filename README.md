@@ -7,13 +7,13 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-336791.svg)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)
 
-## 📖 Overview
+## Overview
 
 Sentinela is a completely frictionless expense tracker designed to bypass the limitations of manual budgeting apps. By utilizing an iOS Shortcut automation, it silently intercepts Apple Pay taps at the OS level and forwards the transaction data to a secure FastAPI backend. 
 
 Instead of opening a budgeting app, Sentinela immediately sends a **Push Notification via Telegram**. The user categorizes the transaction directly from the Telegram notification using interactive inline buttons, updating the cloud database in real-time.
 
-## ✨ Features
+## Features
 
 - **Zero-Friction Logging:** Intercepts Apple Pay transactions instantly via iOS Shortcuts.
 - **Interactive Telegram UI:** Categorize transactions from your lock screen without opening an app.
@@ -22,7 +22,7 @@ Instead of opening a budgeting app, Sentinela immediately sends a **Push Notific
 - **iOS Home Screen Widget:** Includes a custom `Scriptable` JavaScript widget for a beautiful, real-time budget dashboard on your iPhone.
 - **Cloud Native:** Dockerized and fully ready for deployment on Render, Fly.io, or AWS with a PostgreSQL (Supabase) database.
 
-## 🏗️ System Architecture
+## System Architecture
 
 1. **Trigger (iOS):** User taps their card via Apple Pay. An iOS Shortcut Personal Automation detects the transaction and extracts the Merchant, Amount, and Currency.
 2. **Ingestion (FastAPI):** A `POST` request is sent to the `/api/v1/transactions/webhook` endpoint. Pydantic validates the payload and verifies the API Key.
@@ -30,14 +30,14 @@ Instead of opening a budgeting app, Sentinela immediately sends a **Push Notific
 4. **Notification (Telegram):** A FastAPI Background Task triggers the Telegram Bot API to send a rich message with inline category buttons.
 5. **Categorization (Webhook):** When the user taps a button, Telegram fires a webhook back to Sentinela. The backend updates the database category, recalculates the daily budget, and edits the Telegram message to show a success checkmark and the remaining daily budget.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Backend:** Python, FastAPI, Uvicorn
 - **Data & ORM:** SQLAlchemy, Pydantic, PostgreSQL
 - **Integrations:** Telegram Bot API
 - **Deployment:** Docker, Render, Supabase
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Local Development
 
@@ -71,7 +71,7 @@ SAVINGS_GOAL="500"
 uvicorn app.main:app --host 127.0.0.1 --port 8080 --reload
 ```
 
-## 🧪 Testing
+## Testing
 
 This project uses `pytest` for unit testing the API and database logic.
 ```bash
